@@ -76,22 +76,6 @@ function setup()
         pts[k] = (v + c)/piw
     end
     vor.shader.pts = pts
-    
-    local cplx = voronoi(teamA)
-    local nc = #cplx
-    
-    print(nc)
-    local u,v
-    for k,cell in ipairs(cplx) do
-        nc = #cell
-        print(nc)
-        for k=1,nc do
-            u = cell[k]
-            v = cell[k%nc+1]
-            print(u[1],v[1])
-        end
-    end
-    print("---")
 end
 
 function draw()
@@ -102,21 +86,24 @@ function draw()
     TransformOrientation(LANDSCAPE_LEFT)
     translate(RectAnchorOf(Landscape,"centre"))
     sprite(pitch)
-    vor:draw()
+    -- vor:draw()
     popStyle()
     strokeWidth(2)
-    stroke(teamA.colour:shade(50))
-    local cplx = voronoi(teamA)
-    local nc = #cplx
-    local u,v
-    for k,cell in ipairs(cplx) do
-        nc = #cell
-        for l=1,nc do
-            u = cell[l]
-            v = cell[l%nc+1]
-            line(u[1] + teamA[k],v[1] + teamA[k])
-            if u[2] then
-                -- line(teamA[k],u[2])
+    for j,t in ipairs({teamA,teamB}) do
+        local cplx = voronoi(t)
+        local nc = #cplx
+        local u,v
+        for k,cell in ipairs(cplx) do
+            nc = #cell
+            for l=1,nc do
+                u = cell[l]
+                v = cell[l%nc+1]
+                stroke(t.colour:shade(50))
+                line(u[1] + t[k],v[1] + t[k])
+                if u[2] then
+                    stroke(t.colour:tint(50))
+                    line(t[k],u[2])
+                end
             end
         end
     end
@@ -176,7 +163,7 @@ end
 
 function voronoi(p)
     local complex = {}
-    local cell,outer,inner,hlen,no,nc,c,d,e,f,uv
+    local cell,outer,inner,hlen,no,nc,c,d,e,f,uv,pr
     local np = #p
     for k,v in ipairs(p) do
         cell = {{vec2(-pw*sf,-ph*sf)/2 - v}, {vec2(pw*sf,-ph*sf)/2 - v}, {vec2(pw*sf,ph*sf)/2 - v}, {vec2(-pw*sf,ph*sf)/2 - v}}
@@ -184,26 +171,41 @@ function voronoi(p)
         for l,u in ipairs(p) do
             if l ~= k then
                 uv = u - v
-                outer, inner, hlen, no = {}, {}, uv:lenSqr()/2, 0
-                for m,w in ipairs(cell) do
-                    if w[1]:dot(uv) >= hlen then
-                        table.insert(outer,m)
-                        no = no + 1
+                outer, inner, hlen, no = false, false, uv:lenSqr()/2, 0
+                pr = cell[nc][1]:dot(uv)
+                for m = 1,nc do
+                    if cell[m][1]:dot(uv) >= hlen and pr < hlen then
+                        outer = m
+                    elseif cell[m][1]:dot(uv) < hlen and pr >= hlen then
+                        inner = (m-2)%nc+1
                     end
+                    pr = cell[m][1]:dot(uv)
                 end
-                if no >= 1 then
-                    d = cell[outer[1]][1]
-                    c = cell[(outer[1]-2)%nc+1][1]
+                if inner and outer then
+                    d = cell[outer][1]
+                    c = cell[(outer-2)%nc+1][1]
                     e = {((uv/2 - d):dot(uv))/((c-d):dot(uv))*c + ((uv/2 - c):dot(uv))/((d-c):dot(uv))*d,u}
-                    c = cell[outer[no]][1]
-                    d = cell[outer[no]%nc+1][1]
-                    f = {((uv/2 - d):dot(uv))/((c-d):dot(uv))*c + ((uv/2 - c):dot(uv))/((d-c):dot(uv))*d,u}
-                    for m = 1,no do
-                        table.remove(cell,outer[1])
+                    c = cell[inner][1]
+                    d = cell[inner%nc+1][1]
+                    f = {((uv/2 - d):dot(uv))/((c-d):dot(uv))*c + ((uv/2 - c):dot(uv))/((d-c):dot(uv))*d,cell[inner][2]}
+                    if inner < outer then
+                        for m = outer,nc do
+                            table.remove(cell,outer)
+                        end
+                        for m = 1,inner do
+                            table.remove(cell,1)
+                        end
+                        table.insert(cell,1,f)
+                        table.insert(cell,e)
+                        nc = outer - inner + 1
+                    else
+                        for m = outer,inner do
+                            table.remove(cell,outer)
+                        end
+                        table.insert(cell,outer,f)
+                        table.insert(cell,outer,e)
+                        nc = nc - inner + outer + 1
                     end
-                    table.insert(cell,outer[1],f)
-                    table.insert(cell,outer[1],e)
-                    nc = nc + 2 - no
                 end
             end
         end

@@ -3,31 +3,32 @@
 function setup()
     displayMode(OVERLAY)
     displayMode(FULLSCREEN)
+    --[[
     cmodule "Voronoi Football"
-    cmodule.path("Graphics", "Maths", "Utilities", "Base")
+    cmodule.path("Graphics", "Maths", "Utilities", "Base", "UI")
     cimport "VecExt"
     cimport "ColourExt"
     cimport "Coordinates"
-
-    vor = mesh()
-    local c = image(1,255)
-    for k=1,255 do
-        c:set(1,k,hsl(k,255,127))
+    cimport "Button"
+    touches = cimport "Touch"()
+    ui = cimport "UI"(touches)
+    --]]
+    --[[
+    for k,v in ipairs (cmodule.transfer()) do
+        v = v:sub(1,-5)
+        saveProjectTab(v:sub(v:find(":")+1,-1),readProjectTab(v))
     end
-    vor.shader = shader(vShader())
-    npt = 0
-    init = true
-    spriteMode(CORNER)
-    radius = 1
-    piw,pih = math.max(WIDTH,HEIGHT),math.min(WIDTH,HEIGHT)
+    --]]
+    -- [[
+    touches = Touches()
+    ui = UI(touches)
+    --]]
+    local piw,pih = RectAnchorOf(Landscape,"size")
     local b = 10
-    pw,ph = 130,100
-    sf = math.floor(math.min((piw-2*b)/pw,(pih-2*b)/ph))
+    local pw,ph = 130,100
+    local sf = math.floor(math.min((piw-2*b)/pw,(pih-2*b)/ph))
     piw,pih = pw*sf+2*b, ph*sf + 2*b
     pitch = image(piw,pih)
-    vor:addRect(0,0,piw,pih)
-    vor.shader.texture = c
-    vor.shader.aspect = pih/piw
     pushStyle()
     setContext(pitch)
     background(22, 172, 46, 255)
@@ -58,27 +59,34 @@ function setup()
     setContext()
     popStyle()
     
-    teamSize = 11
+    local teamSize = 11
     playerSize = 15
-    teamA,teamB = {colour = color():new("blue")},{colour = color():new("red")}
-    
+    teamA = Team(color():new("blue"),{0,0,pw*sf,ph*sf})
+    teamB = Team(color():new("red"),{0,0,pw*sf,ph*sf})
+    teamC = Team(color():new("black"),{0,0,pw*sf,ph*sf})
+    touches:pushHandler(teamA)
+    touches:pushHandler(teamB)
     for k=1,teamSize do
-        table.insert(teamA,vec2(k*pw/(teamSize+1)/2*sf,(ph-10)*sf/2-b))
-        table.insert(teamB,vec2(-k*pw/(teamSize+1)/2*sf,-(ph-10)*sf/2+b))
+        teamA:addPlayer(vec2(k*pw/(teamSize+1)/2*sf,(ph-10)*sf/2-b))
+        teamB:addPlayer(vec2(-k*pw/(teamSize+1)/2*sf,-(ph-10)*sf/2+b))
     end
-    
-    local pts = {}
-    local c = vec2(piw/2,pih/2)
-    for k=1,16 do
-        table.insert(pts,vec2(-2,-2))
-    end
-    for k,v in ipairs(teamA) do
-        pts[k] = (v + c)/piw
-    end
-    vor.shader.pts = pts
+    combined = false
+    local b = ui:addButton({
+        contents = function() if combined then text("S") else text("D") end end,
+        orient = false,
+        pos = function() return RectAnchorOf(Screen,"north east") end,
+        anchor = "north east",
+        action = function()
+                    combined = not combined
+                end
+    })
+    b:activate()
+    -- ui:activateElement(b)
+    orientationChanged = _orientationChanged
 end
 
 function draw()
+    touches:draw()
     background(40,40,50)
     pushMatrix()
     pushStyle()
@@ -86,218 +94,24 @@ function draw()
     TransformOrientation(LANDSCAPE_LEFT)
     translate(RectAnchorOf(Landscape,"centre"))
     sprite(pitch)
-    -- vor:draw()
     popStyle()
-    strokeWidth(2)
-    for j,t in ipairs({teamA,teamB}) do
-        local cplx = voronoi(t)
-        local nc = #cplx
-        local u,v
-        for k,cell in ipairs(cplx) do
-            nc = #cell
-            for l=1,nc do
-                u = cell[l]
-                v = cell[l%nc+1]
-                stroke(t.colour:shade(50))
-                line(u[1] + t[k],v[1] + t[k])
-                if u[2] then
-                    stroke(t.colour:tint(50))
-                    line(t[k],u[2])
-                end
-            end
-        end
+    if combined then
+        teamC:setPlayers({teamA,teamB})
+        teamC:drawComplex()
+    else
+        teamA:drawComplex()
+        teamB:drawComplex()
     end
-    fill(255, 255, 255, 255)
-    noStroke()
-    fill(teamA.colour)
-    for k,v in ipairs(teamA) do
-        ellipse(v,playerSize)
-    end
-    fill(teamB.colour)
-    for k,v in ipairs(teamB) do
-        ellipse(v,playerSize)
-    end
+    teamA:drawPlayers(playerSize)
+    teamB:drawPlayers(playerSize)
     popMatrix()
-
+    ui:draw()
 end
 
 function touched(t)
-    t = TransformTouch(LANDSCAPE_LEFT,t)
-    local tpt = vec2(t.x,t.y)
-    local c = vec2(RectAnchorOf(Landscape,"centre"))
-    tpt = tpt - c
-    if t.state == BEGAN then
-        local d = 50^2
-        for k,v in ipairs(teamA) do
-            if v:distSqr(tpt) < d then
-                tplayer = k
-                tteam = teamA
-                d = v:distSqr(tpt)
-            end
-        end
-        for k,v in ipairs(teamB) do
-            if v:distSqr(tpt) < d then
-                tplayer = k
-                tteam = teamB
-                d = v:distSqr(tpt)
-            end
-        end
-        if tplayer then
-            toffset = tteam[tplayer] - tpt
-        end
-    else
-        if tplayer then
-            tteam[tplayer] = tpt + toffset
-        end
-    end
-    local pts = {}
-    local c = vec2(piw/2,pih/2)
-    for k=1,16 do
-        table.insert(pts,vec2(-2,-2))
-    end
-    for k,v in ipairs(teamA) do
-        pts[k] = (v + c)/piw
-    end
-    vor.shader.pts = pts
+    touches:addTouch(t)
 end
-
-function voronoi(p)
-    local complex = {}
-    local cell,outer,inner,hlen,no,nc,c,d,e,f,uv,pr
-    local np = #p
-    for k,v in ipairs(p) do
-        cell = {{vec2(-pw*sf,-ph*sf)/2 - v}, {vec2(pw*sf,-ph*sf)/2 - v}, {vec2(pw*sf,ph*sf)/2 - v}, {vec2(-pw*sf,ph*sf)/2 - v}}
-        nc = 4
-        for l,u in ipairs(p) do
-            if l ~= k then
-                uv = u - v
-                outer, inner, hlen, no = false, false, uv:lenSqr()/2, 0
-                pr = cell[nc][1]:dot(uv)
-                for m = 1,nc do
-                    if cell[m][1]:dot(uv) >= hlen and pr < hlen then
-                        outer = m
-                    elseif cell[m][1]:dot(uv) < hlen and pr >= hlen then
-                        inner = (m-2)%nc+1
-                    end
-                    pr = cell[m][1]:dot(uv)
-                end
-                if inner and outer then
-                    d = cell[outer][1]
-                    c = cell[(outer-2)%nc+1][1]
-                    e = {((uv/2 - d):dot(uv))/((c-d):dot(uv))*c + ((uv/2 - c):dot(uv))/((d-c):dot(uv))*d,u}
-                    c = cell[inner][1]
-                    d = cell[inner%nc+1][1]
-                    f = {((uv/2 - d):dot(uv))/((c-d):dot(uv))*c + ((uv/2 - c):dot(uv))/((d-c):dot(uv))*d,cell[inner][2]}
-                    if inner < outer then
-                        for m = outer,nc do
-                            table.remove(cell,outer)
-                        end
-                        for m = 1,inner do
-                            table.remove(cell,1)
-                        end
-                        table.insert(cell,1,f)
-                        table.insert(cell,e)
-                        nc = outer - inner + 1
-                    else
-                        for m = outer,inner do
-                            table.remove(cell,outer)
-                        end
-                        table.insert(cell,outer,f)
-                        table.insert(cell,outer,e)
-                        nc = nc - inner + outer + 1
-                    end
-                end
-            end
-        end
-        table.insert(complex,cell)
-    end
-    return complex
-end
-
-function hsl(t,m,a)
-    a = a or 255
-    t = math.max(0,math.min(6,t/m*6))
-    if t < 1 then
-        return color(255,t*255,0,a)
-    elseif t < 2 then
-        return color((2-t)*255,255,0,a)
-    elseif t < 3 then
-        return color(0,255,(t-2)*255,a)
-    elseif t < 4 then
-        return color(0,(4-t)*255,255,a)
-    elseif t < 5 then
-        return color((t-4)*255,0,255,a)
-    else
-        return color(255,0,(6-t)*255,a)
-    end
-end
-
-function vShader()
-    return [[
-//
-// A basic vertex shader
-//
-
-//This is the current model * view * projection matrix
-// Codea sets it automatically
-uniform mat4 modelViewProjection;
-
-//This is the current mesh vertex position, color and tex coord
-// Set automatically
-attribute vec4 position;
-attribute vec4 color;
-attribute vec2 texCoord;
-uniform float aspect;
-
-//This is an output variable that will be passed to the fragment shader
-varying lowp vec4 vColor;
-varying highp vec2 vTexCoord;
-
-void main()
-{
-    //Pass the mesh color to the fragment shader
-    vColor = color;
-    vTexCoord = vec2(texCoord.x,texCoord.y*aspect);
     
-    //Multiply the vertex position by our combined transform
-    gl_Position = modelViewProjection * position;
-}
-]],[[
-//
-// A basic fragment shader
-//
-
-//Default precision qualifier
-precision highp float;
-
-//This represents the current texture on the mesh
-uniform lowp sampler2D texture;
-uniform highp vec2 pts[16];
-
-//The interpolated vertex color for this fragment
-varying lowp vec4 vColor;
-
-//The interpolated texture coordinate for this fragment
-varying highp vec2 vTexCoord;
-
-void main()
-{
-     float d = 2.;
-     float dd;
-     float p = 0.;
-     int i;
-     float s;
-    for (i = 0; i < 16; i++) {
-        dd = distance(vTexCoord,pts[i]);
-        s = step(d,dd);
-        p = (1.-s)*(float (i)) + s*p;
-        d = s*d + (1.-s)*dd;
-    }
-    //Sample the texture at the interpolated coordinate
-    lowp vec4 col = texture2D( texture, vec2(.5,p/16.) );
-
-    //Set the output color to the texture color
-    gl_FragColor = col;
-}
-]]
+function _orientationChanged(o)
+    ui:orientationChanged(o)
 end

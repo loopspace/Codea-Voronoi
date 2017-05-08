@@ -6,13 +6,31 @@
 	<string>Unknown</string>
 	<key>Buffer Order</key>
 	<array>
+		<string>VecExt</string>
+		<string>utf8Case</string>
+		<string>Coordinates</string>
+		<string>Button</string>
+		<string>Colour</string>
+		<string>ColourNames</string>
+		<string>Touch</string>
+		<string>ColourExt</string>
+		<string>Lengths</string>
+		<string>BinDecHex</string>
+		<string>utf8</string>
+		<string>RoundedRectangle</string>
+		<string>Font</string>
+		<string>UI</string>
+		<string>Team</string>
+		<string>Voronoi</string>
 		<string>Main</string>
 	</array>
+	<key>Created</key>
+	<string>2017-05-07 19:42:11 +0000</string>
 	<key>Dependencies</key>
-	<array>
-		<string>CModule</string>
-	</array>
+	<array/>
 	<key>Description</key>
 	<string>No description available</string>
+	<key>Icon</key>
+	<string>Icon.png</string>
 </dict>
 </plist>

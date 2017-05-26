@@ -60,29 +60,19 @@ function setup()
     popStyle()
     
     local teamSize = 11
-    playerSize = 15
-    teamA = Team(color():new("blue"),{0,0,pw*sf,ph*sf})
-    teamB = Team(color():new("red"),{0,0,pw*sf,ph*sf})
-    teamC = Team(color():new("black"),{0,0,pw*sf,ph*sf})
-    touches:pushHandler(teamA)
-    touches:pushHandler(teamB)
+    players = Players({0,0,pw*sf,ph*sf})
+    teamA = players:addTeam(color():new("blue"),"Blues",{vec2(-pw*sf/2,-4*sf),vec2(-pw*sf/2,4*sf)})
+    teamB = players:addTeam(color():new("red"),"Reds",{vec2(pw*sf/2,-4*sf),vec2(pw*sf/2,4*sf)})
+    touches:pushHandler(players)
     for k=1,teamSize do
-        teamA:addPlayer(vec2(k*pw/(teamSize+1)/2*sf,(ph-10)*sf/2-b))
-        teamB:addPlayer(vec2(-k*pw/(teamSize+1)/2*sf,-(ph-10)*sf/2+b))
+        players:addPlayer(vec2(k*pw/(teamSize+1)/2*sf,(ph-10)*sf/2-b),vec2(-1,0),k,teamA)
+        players:addPlayer(vec2(-k*pw/(teamSize+1)/2*sf,-(ph-10)*sf/2+b),vec2(1,0),k,teamB)
     end
-    combined = false
-    local b = ui:addButton({
-        contents = function() if combined then text("S") else text("D") end end,
-        orient = false,
-        pos = function() return RectAnchorOf(Screen,"north east") end,
-        anchor = "north east",
-        action = function()
-                    combined = not combined
-                end
-    })
-    b:activate()
-    -- ui:activateElement(b)
+    players:setTeams()
+
     orientationChanged = _orientationChanged
+    -- saveImage("Dropbox:VoronoiFootball",readImage("Project:Icon"))
+    -- parameter.watch("1/DeltaTime")
 end
 
 function draw()
@@ -95,15 +85,8 @@ function draw()
     translate(RectAnchorOf(Landscape,"centre"))
     sprite(pitch)
     popStyle()
-    if combined then
-        teamC:setPlayers({teamA,teamB})
-        teamC:drawComplex()
-    else
-        teamA:drawComplex()
-        teamB:drawComplex()
-    end
-    teamA:drawPlayers(playerSize)
-    teamB:drawPlayers(playerSize)
+    players:update()
+    players:draw()
     popMatrix()
     ui:draw()
 end

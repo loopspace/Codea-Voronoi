@@ -20,7 +20,9 @@
 		<string>RoundedRectangle</string>
 		<string>Font</string>
 		<string>UI</string>
-		<string>Team</string>
+		<string>Player</string>
+		<string>Players</string>
+		<string>Ball</string>
 		<string>Voronoi</string>
 		<string>Main</string>
 	</array>

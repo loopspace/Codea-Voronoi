@@ -4,11 +4,11 @@ function Voronoi(p,r)
     local np = #p
     local pw,ph = RectAnchorOf(r,"size")
     for k,v in ipairs(p) do
-        cell = {{vec2(-pw,-ph)/2 - v}, {vec2(pw,-ph)/2 - v}, {vec2(pw,ph)/2 - v}, {vec2(-pw,ph)/2 - v}}
+        cell = {{vec2(-pw,-ph)/2 - v.position}, {vec2(pw,-ph)/2 - v.position}, {vec2(pw,ph)/2 - v.position}, {vec2(-pw,ph)/2 - v.position}}
         nc = 4
         for l,u in ipairs(p) do
             if l ~= k then
-                uv = u - v
+                uv = u.position - v.position
                 outer, inner, hlen, no = false, false, uv:lenSqr()/2, 0
                 pr = cell[nc][1]:dot(uv)
                 for m = 1,nc do
@@ -63,10 +63,10 @@ function drawCells(cplx,p,c)
             u = cell[l]
             v = cell[l%nc+1]
             stroke(c:shade(50))
-            line(u[1] + p[k],v[1] + p[k])
+            line(u[1] + p[k].position,v[1] + p[k].position)
             if u[2] then
                 stroke(c:tint(50))
-                line(p[k],u[2])
+                line(p[k].position,u[2].position)
             end
         end
     end

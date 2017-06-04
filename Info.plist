@@ -6,6 +6,8 @@
 	<string>Unknown</string>
 	<key>Buffer Order</key>
 	<array>
+		<string>Formations</string>
+		<string>Main</string>
 		<string>VecExt</string>
 		<string>utf8Case</string>
 		<string>Coordinates</string>
@@ -24,15 +26,10 @@
 		<string>Players</string>
 		<string>Ball</string>
 		<string>Voronoi</string>
-		<string>Main</string>
 	</array>
-	<key>Created</key>
-	<string>2017-05-07 19:42:11 +0000</string>
 	<key>Dependencies</key>
 	<array/>
 	<key>Description</key>
 	<string>No description available</string>
-	<key>Icon</key>
-	<string>Icon.png</string>
 </dict>
 </plist>

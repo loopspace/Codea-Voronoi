@@ -1,11 +1,12 @@
 Player = class()
 
-local Speed = 10
-local possessionSpeed = 7
+local Speed = 20
+local possessionSpeed = 15
 
 function Player:init(n,p,v,t,pl)
     self.name = n
     self.position = p
+    self.startingPosition = p
     self.team = t
     self.players = pl
     self.velocity = v or vec2(0,0)
@@ -43,7 +44,10 @@ function Player:draw(r)
     ellipseMode(CENTER)
     textMode(CORNER)
     fill(self.team.colour)
-    if self.hasBall then
+    if self.score.onGoal then
+        stroke(color():new("hot pink"))
+        strokeWidth(3)
+    elseif self.hasBall then
         stroke(self.team.colour:complement():tint(50))
         strokeWidth(3)
     elseif self.nearBall then
@@ -168,6 +172,9 @@ end
 
 function Player:checkBall(p)
     self.nearBall = self:checkCell(p)
+    if not self.nearBall then
+        self.hadBall = false
+    end
 end
 
 function Player:checkCell(p)
@@ -187,10 +194,44 @@ end
 function Player:calcScore()
     self.oldScore = self.score
     local s,n,t,m = 0,0,math.max(WIDTH,HEIGHT),0
+    local goaldir = (self.team.goal[2]-self.team.goal[1]):rotate90()
+    local goalline = self.team.goal[2]-self.team.goal[1]
+    local gpa = self.team.goal[1] - self.position
+    local gpb = self.team.goal[2] - self.position
+    local tongoal 
     for k,v in ipairs(self.teamCell) do
         if v[2] then
             s = s + v[2].position:dist(self.position) 
             n = n + 1
+        else
+            local w = self.teamCell[k%#self.teamCell+1]
+            if math.abs((v[1]-gpa):dot(goaldir)) < 0.01 and math.abs((w[1]-gpa):dot(goaldir)) < 0.01 then
+                if v[1]:dot(goalline) > gpb:dot(goalline)
+                    or w[1]:dot(goalline) < gpa:dot(goalline)
+                    then
+                    tongoal = false
+                else
+                    tongoal = true
+                end
+            end
+        end
+    end
+    local fongoal 
+    for k,v in ipairs(self.fullCell) do
+        if v[2] then
+            s = s + v[2].position:dist(self.position) 
+            n = n + 1
+        else
+            local w = self.fullCell[k%#self.fullCell+1]
+            if math.abs((v[1]-gpa):dot(goaldir)) < 0.01 and math.abs((w[1]-gpa):dot(goaldir)) < 0.01 then
+                if v[1]:dot(goalline) > gpb:dot(goalline)
+                    or w[1]:dot(goalline) < gpa:dot(goalline)
+                    then
+                    fongoal = false
+                else
+                    fongoal = true
+                end
+            end
         end
     end
     for k,v in ipairs(self.fullCell) do
@@ -199,6 +240,16 @@ function Player:calcScore()
             m = m + 1
         end
     end
+
+    local gp = self.position - self.team.goal[1]
+    local bp = self.players.ball.position - self.team.goal[1]
+    local bball
+    if math.abs(goaldir:dot(bp)) > math.abs(goaldir:dot(gp)) then
+        bball = false
+    else
+        bball = true
+    end
+    
     self.score = {
         teamArea = Shoelace(self.teamCell),
         teamDistance = s/n,
@@ -206,15 +257,51 @@ function Player:calcScore()
         nearestOpposition = t,
         numberOfOpposition = m,
         distanceToGoal = self.position:dist((self.team.goal[1]+self.team.goal[2])/2),
-        distanceToBall = self.position:dist(self.players.ball.position)
+        distanceToBall = self.position:dist(self.players.ball.position),
+        behindBall = bball,
+        onGoalTeam = tongoal,
+        onGoalFull = fongoal,
+        onGoal = tongoal or fongoal
     }
 end
 
 function Player:update()
     local s
+    if self.hasBall and self.score.onGoal and not self.mustKick then
+        local p
+        if self.score.onGoalTeam then
+            p = .1
+        else
+            p = .5
+        end
+        if math.random() < p then
+            self.players.ball:kick((self.team.goal[1]+self.team.goal[2])/2 - 15*(self.team.goal[2]-self.team.goal[1]):rotate90():normalise()
+            )
+        end
+    end
     if self.hasBall then
-        local r = math.random()
-        
+        local passable, np, p = {}, 0, 0
+        for k,v in ipairs (self.teamCell) do
+            if v[2] then
+                np = np + 1
+                if v[2].score.behindBall then
+                    p = p + .01
+                else
+                    p = p + .02 
+                end
+                table.insert(passable,{v,p})
+            end
+        end
+        if np > 0 then
+            local r = math.random()
+            for k,v in ipairs(passable) do
+                if r < v[2] then
+                    self.players.ball:kick(v[1][2].position)
+                    self.players.inplay = true
+                    break
+                end
+            end
+        end
     end
     if self.hasBall then
         self:headToGoal()
@@ -228,8 +315,10 @@ function Player:update()
         end
         s = Speed
     end
-    s = LogNormal(s,1)
-    self.position = self.position + DeltaTime*self.velocity*s
+    if not self.mustKick then
+        s = LogNormal(s,1)
+        self.position = self.position + DeltaTime*self.velocity*s
+    end
 end
 
 function Player:evaluateScore(s)

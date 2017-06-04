@@ -10,17 +10,29 @@ function Ball:init(p,s,c)
 end
 
 function Ball:kick(target)
-    self.speed = (self.target - self.position)*self.friction
+    local d = vec2(Normal(0,50),Normal(0,50))
+    self.speed = (target +d - self.position)*self.friction
     self.free = true
+    if self.player then
+        self.player.mustKick = false
+        self.player.hasBall = false
+        self.player.hadBall = true
+    end
 end
 
 function Ball:update()
-    self.position = self.position + DeltaTime*self.speed
-    self.speed = (1 - DeltaTime*self.friction)*self.speed
+    if self.free then
+        self.position = self.position + DeltaTime*self.speed
+        self.speed = (1 - DeltaTime*self.friction)*self.speed
+        if self.speed:len() < 1 then
+            if self.player then
+                self.player.hadBall = false
+            end
+        end
+    end
 end
 
 function Ball:draw()
-    self:update()
     pushStyle()
     ellipseMode(CENTER)
     textMode(CORNER)

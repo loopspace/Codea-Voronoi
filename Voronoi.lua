@@ -1,3 +1,4 @@
+--[[
 function Voronoi(p,r)
     local complex = {}
     local cell,outer,inner,hlen,no,nc,c,d,e,f,uv,pr
@@ -72,3 +73,4 @@ function drawCells(cplx,p,c)
     end
     popStyle()
 end
+--]]

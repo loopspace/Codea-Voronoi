@@ -61,15 +61,15 @@ function setup()
     
     local teamSize = 11
     players = Players({0,0,pw*sf,ph*sf})
-    teamA = players:addTeam(color():new("blue"),"Blues",{vec2(-pw*sf/2,-4*sf),vec2(-pw*sf/2,4*sf)})
+    teamA = players:addTeam(color():new("blue"),"Blues",{vec2(-pw*sf/2,4*sf),vec2(-pw*sf/2,-4*sf)})
     teamB = players:addTeam(color():new("red"),"Reds",{vec2(pw*sf/2,-4*sf),vec2(pw*sf/2,4*sf)})
     touches:pushHandler(players)
     for k=1,teamSize do
-        players:addPlayer(vec2(k*pw/(teamSize+1)/2*sf,(ph-10)*sf/2-b),vec2(-1,0),k,teamA)
-        players:addPlayer(vec2(-k*pw/(teamSize+1)/2*sf,-(ph-10)*sf/2+b),vec2(1,0),k,teamB)
+        players:addPlayer(vec2(Formations.FourFourTwo[k].x*pw*sf/2, Formations.FourFourTwo[k].y*ph*sf/2),vec2(-1,0),k,teamA)
+        players:addPlayer(vec2(-Formations.FourFourTwo[k].x*pw*sf/2, -Formations.FourFourTwo[k].y*ph*sf/2),vec2(1,0),k,teamB)
     end
     players:setTeams()
-
+    players:resetTeams(teamB)
     orientationChanged = _orientationChanged
     -- saveImage("Dropbox:VoronoiFootball",readImage("Project:Icon"))
     -- parameter.watch("1/DeltaTime")

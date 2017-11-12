@@ -2,12 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>Addons</key>
+	<array>
+		<string>Craft</string>
+	</array>
 	<key>Author</key>
 	<string>Unknown</string>
 	<key>Buffer Order</key>
 	<array>
-		<string>Formations</string>
 		<string>Main</string>
+		<string>ARPlane</string>
+		<string>Augmented</string>
+		<string>Formations</string>
+		<string>MathsUtilities</string>
+		<string>Render</string>
 		<string>VecExt</string>
 		<string>utf8Case</string>
 		<string>Coordinates</string>
@@ -27,9 +35,9 @@
 		<string>Ball</string>
 		<string>Voronoi</string>
 	</array>
-	<key>Dependencies</key>
-	<array/>
 	<key>Description</key>
 	<string>No description available</string>
+	<key>Icon</key>
+	<string>Icon.png</string>
 </dict>
 </plist>

@@ -3,7 +3,10 @@ Player = class()
 local Speed = 20
 local possessionSpeed = 15
 
-function Player:init(n,p,v,t,pl)
+function Player:init(n,p,v,t,s,pl)
+    self.entity = s:entity()
+    self.entity.model = craft.model(t.strip)
+    self.entity.scale = vec3(1,1,1)*.003
     self.name = n
     self.position = p
     self.startingPosition = p
@@ -40,6 +43,9 @@ function Player:setTeams()
 end
 
 function Player:draw(r)
+    if not self.team.active then
+        return
+    end
     pushStyle()
     ellipseMode(CENTER)
     textMode(CORNER)
@@ -56,6 +62,18 @@ function Player:draw(r)
     else
         noStroke()
     end
+    local p = vec3(self.position.x/RectAnchorOf(Landscape,"width"),0,-self.position.y/RectAnchorOf(Landscape,"width"))
+    self.entity.position = p
+    local b = self.players.ball.position
+    if b == self.position then
+        b = (self.team.goal[1] + self.team.goal[2])/2
+    end
+    b = vec3(b.x/RectAnchorOf(Landscape,"width"),0,-b.y/RectAnchorOf(Landscape,"width"))
+    self.entity.rotation = quat.fromToRotation(vec3(0,0,1),b-p)
+    pushStyle()
+    fill(0, 0, 0, 94)
+    ellipse(self.position,30)
+    popStyle()
     ellipse(self.position,r)
     local ts = vec2(textSize(self.name))
     ts.x = -ts.x/2
@@ -69,6 +87,9 @@ function Player:draw(r)
 end
 
 function Player:drawCell(b)
+    if not self.team.active then
+        return
+    end
     local cell
     if b then
         cell = self.fullCell
@@ -93,6 +114,9 @@ function Player:drawCell(b)
 end
 
 function Player:drawPassing(b)
+    if not self.team.active then
+        return
+    end
     local cell
     if b then
         cell = self.fullCell
@@ -266,6 +290,9 @@ function Player:calcScore()
 end
 
 function Player:update()
+    if not self.team.active then
+        return
+    end
     local s
     if self.hasBall and self.score.onGoal and not self.mustKick then
         local p

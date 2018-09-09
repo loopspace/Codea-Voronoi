@@ -758,6 +758,11 @@ function UI:addNotice(t)
                     return RectAnchorOf(self.screen,"centre")
                 end
     end
+    if t.anchor then
+        self.notices.anchor = t.anchor
+    else
+        self.notices.anchor = "centre"
+    end
     self.notices:resetAnchor()
     self.notices.fade = t.fadeTime or 2
     self.notices:activate()

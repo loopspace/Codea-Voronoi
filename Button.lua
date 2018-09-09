@@ -49,11 +49,12 @@ function Button:draw()
     pushStyle()
     fontSize(self.fontsize)
     ellipseMode(RADIUS)
+    textMode(CENTER)
     fill(40,40,50,127)
     local x,y,mw,a = self.x,self.y,self.size,0
-    local ax,ay = RectAnchorOf({0,0,mw,mw},self.anchor)
-    x = x - ax
-    y = y - ay
+    local ax,ay = RectAnchorOf({0,0,2*mw,2*mw},self.anchor)
+    x = x - ax + mw
+    y = y - ay + mw
     if self.orient then
         if math.abs(Gravity.x) < math.abs(Gravity.y) then
             if Gravity.y < 0 then

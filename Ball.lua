@@ -42,6 +42,7 @@ function Ball:draw()
     -- noStroke()
     ellipse(self.position,self.size)
     popStyle()
+
 end
 
 function Ball:isTouchedBy(t)
@@ -51,7 +52,16 @@ function Ball:isTouchedBy(t)
     tpt = tpt - c
     local d = 50^2
     if self.position:distSqr(tpt) < d then
+        if self.player then
+            self.player.hasBall = false
+            self.player.hadBall = false
+            self.player.team.possession = false
+            self.player.mustKick = false
+            self.player = false
+        end
+        self.free = true
         self.offset = self.position - tpt
+        self.speed = vec2(0,0)
         return true
     end
     return false    
@@ -64,6 +74,9 @@ function Ball:processTouches(g)
     local c = vec2(RectAnchorOf(Landscape,"centre"))
     tpt = tpt - c
     self.position  = self.offset + tpt
+    if g.type.ended and g.type.short then
+        self.speed = g.touchesArr[1]:velocity()
+    end
     g:noted()
     if g.type.ended then
         g:reset()

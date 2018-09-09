@@ -40,6 +40,9 @@ function Player:setTeams()
 end
 
 function Player:draw(r)
+    if not self.team.active then
+        return
+    end
     pushStyle()
     ellipseMode(CENTER)
     textMode(CORNER)
@@ -69,6 +72,9 @@ function Player:draw(r)
 end
 
 function Player:drawCell(b)
+    if not self.team.active then
+        return
+    end
     local cell
     if b then
         cell = self.fullCell
@@ -93,6 +99,9 @@ function Player:drawCell(b)
 end
 
 function Player:drawPassing(b)
+    if not self.team.active then
+        return
+    end
     local cell
     if b then
         cell = self.fullCell
@@ -266,6 +275,9 @@ function Player:calcScore()
 end
 
 function Player:update()
+    if not self.team.active then
+        return
+    end
     local s
     if self.hasBall and self.score.onGoal and not self.mustKick then
         local p

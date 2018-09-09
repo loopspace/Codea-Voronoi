@@ -31,6 +31,20 @@ end
 local Landscape = {0,0,_height,_width}
 local Portrait = {0,0,_width,_height}
 
+function resetSizes()
+    if WIDTH > HEIGHT then
+        _width = HEIGHT
+        _height = WIDTH
+    else
+        _width = WIDTH
+        _height = HEIGHT
+    end
+    Landscape[3] = _height
+    Landscape[4] = _width
+    Portrait[3] = _width
+    Portrait[4] = _height
+end
+
 -- Origin, x-vector, y-vector of orientation relative to Portrait
 local OrientationCoordinates = {}
 OrientationCoordinates[PORTRAIT] = {vec2(0,0), vec2(1,0), vec2(0,1)}
@@ -215,6 +229,19 @@ function TransformTouch(o,t)
         tt[u] = t[u]
     end
     return tt
+end
+
+function TransformObjectTouch(obj,fn)
+    local __tby = obj.isTouchedBy
+    local __pth = obj.processTouches
+    obj.isTouchedBy = function(s,t)
+        t = TransformTouch(fn,t)
+        return __tby(s,t)
+    end
+    obj.processTouches = function(s,g)
+        g:transformTouches(fn)
+        return __pth(s,g)
+    end
 end
 
 --[[

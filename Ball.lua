@@ -57,7 +57,7 @@ function Ball:draw()
 end
 
 function Ball:isTouchedBy(t)
-    t = TransformTouch(LANDSCAPE_LEFT,t)
+    -- t = TransformTouch(LANDSCAPE_LEFT,t)
     local tpt = vec2(t.x,t.y)
     local c = vec2(RectAnchorOf(Landscape,"centre"))
     tpt = tpt - c
@@ -80,7 +80,7 @@ end
 
 function Ball:processTouches(g)
     local t = g.touchesArr[1].touch
-    t = TransformTouch(LANDSCAPE_LEFT,t)
+    -- t = TransformTouch(LANDSCAPE_LEFT,t)
     local tpt = vec2(t.x,t.y)
     local c = vec2(RectAnchorOf(Landscape,"centre"))
     tpt = tpt - c

@@ -21,17 +21,26 @@ function Players:init(p,s)
     local p = ui:addButton({
         contents = function() if self.playing then text("⏸") else text("▶") end end,
         orient = false,
-        pos = function() local x,y = RectAnchorOf(Screen,"north east") y = y - 100 return x,y end,
+        pos = function() local x,y = RectAnchorOf(Screen,"north east") y = y - 200 return x,y end,
         anchor = "north east",
         action = function()
                     self.playing = not self.playing
                     self:pause()
                 end
     })
+    local r = ui:addButton({
+        contents = function() text("↻") end,
+        orient = false,
+        pos = function() local x,y = RectAnchorOf(Screen,"north east") y = y - 300 return x,y end,
+        anchor = "north east",
+        action = function()
+                    self:reset()
+                end
+    })
     local t = ui:addButton({
         contents = function() if self.showonlyteam then text(self.teams[self.showonlyteam].name:sub(1,1)) else text("A") end end,
         orient = false,
-        pos = function() local x,y = RectAnchorOf(Screen,"north east") y = y - 200 return x,y end,
+        pos = function() local x,y = RectAnchorOf(Screen,"north east") y = y - 100 return x,y end,
         anchor = "north east",
         action = function()
                     if self.showonlyteam then
@@ -58,6 +67,7 @@ function Players:init(p,s)
     b:activate()
     p:activate()
     t:activate()
+    r:activate()
 end
 
 function Players:addTeam(c,n,s,g)
@@ -119,12 +129,19 @@ function Players:resetTeams(t)
     end
     for k,v in ipairs(self.players) do
         if v.team ~= t and v.nearBall then
-            v.position = self.ball.position
+            v.position = self.ball.position + (self.ball.position - (v.team.goal[1]+v.team.goal[2])/2):normalize()*self.ball.size
             self.ball.player = v
             v.mustKick = true
         end
     end
 
+end
+
+function Players:reset()
+    self:resetTeams(self.teams[#self.teams])
+    for k,v in ipairs(self.teams) do
+        v.score = 0
+    end
 end
 
 function Players:pause(b)
@@ -136,7 +153,7 @@ function Players:pause(b)
 end
 
 function Players:isTouchedBy(t)
-    t = TransformTouch(LANDSCAPE_LEFT,t)
+    -- t = TransformTouch(LANDSCAPE_LEFT,t)
     local tpt = vec2(t.x,t.y)
     local c = vec2(RectAnchorOf(Landscape,"centre"))
     tpt = tpt - c
@@ -167,7 +184,7 @@ end
 function Players:processTouches(g)
     if self.tplayer then
         local t = g.touchesArr[1].touch
-        t = TransformTouch(LANDSCAPE_LEFT,t)
+        -- t = TransformTouch(LANDSCAPE_LEFT,t)
         local tpt = vec2(t.x,t.y)
         local c = vec2(RectAnchorOf(Landscape,"centre"))
         tpt = tpt - c

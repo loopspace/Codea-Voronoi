@@ -10,7 +10,7 @@ function setup()
     scene = craft.scene()
     touches = Touches()
     ui = UI(touches)
-    local augmented = Augmented(touches,scene)
+    augmented = Augmented(touches,scene)
 
     local piw,pih = RectAnchorOf(Landscape,"size")
     local b = 10
@@ -75,12 +75,14 @@ function setup()
     e:add(Render,game,pitch,players)
 
     local screenToEntity = function(t)
+        -- TransformTouch(CurrentOrientation,t)
         t =  vec2(t.x,t.y)
         local o,d = scene.camera:get(craft.camera):screenToRay(t)
         local c = entityInverseTransformPoint(e,o)
         local n = entityInverseTransformDirection(e,d)
         local s = -c.y/n.y
         local tt = vec2(c.x + s* n.x,c.z + s*n.z)
+        -- tt = Orientation(LANDSCAPE_LEFT,tt)
         tt = vec2((tt.x+.5)*Landscape[3],(-tt.y+asp/2)*Landscape[3])
         return tt
     end
@@ -89,7 +91,7 @@ function setup()
     TransformObjectTouch(players.ball,screenToEntity)
 
     augmented.entity = e
-    augmented.active = true
+    augmented.active = false --true
     augmented:start()
     augmented.action = function()
 
@@ -116,4 +118,19 @@ end
     
 function _orientationChanged(o)
     ui:orientationChanged(o)
+    if not augmented.active then
+        if o == LANDSCAPE_LEFT then
+            scene.camera.y = 1
+            scene.camera.rotation = quat.eulerAngles(90,180,0)
+        elseif o == LANDSCAPE_RIGHT then
+            scene.camera.y = 1
+            scene.camera.rotation = quat.eulerAngles(90,0,0)
+        elseif o == PORTRAIT then
+            scene.camera.y = 1.3
+            scene.camera.rotation = quat.eulerAngles(90,90,0)
+        elseif o == PORTRAIT_UPSIDE_DOWN then
+            scene.camera.y = 1.3
+            scene.camera.rotation = quat.eulerAngles(90,270,0)
+        end
+    end
 end
